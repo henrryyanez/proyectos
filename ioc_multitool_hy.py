@@ -23,38 +23,39 @@ import re
 
 
 def read_lines():
-    count = 0
-    with open('target.txt') as fi:
-        for line in fi:
-            count += 1
-            v = re.match('[0-9]+(?:\.[0-9]+){3}', line.strip())
-            print(line)
-            if v:
-                # GET IP INFORMATION
-                info_ip = ibm.get_ip_info(ip_mode='report', ip=line.strip())
-                score_info = info_ip['score']
-                cats_info = info_ip['cats']
-                # GET WHOIS INFORMATION
-                response_whois = ibm.get_whois_info(entity=line.strip())
-                fecha_whois = response_whois['createdDate']
-                fecha_update = response_whois['updatedDate']
-                country_whois = response_whois.get('contactEmail')
-                registrante_whois = response_whois['registrarName']
-                print('IP1:', fecha_whois, end='')
-                print('IP2:', score_info, end='')
+    with open('target.txt','r') as fi:
+        lines = fi.readlines()
+
+        for line in lines:
+            if re.match('[0-9]+(?:\.[0-9]+){3}', line.strip()) is None:
+                line = line.strip()
+                requesturl(line)
             else:
-                #print('Linea', line, end='')
-                info_url = ibm.get_url_info(url_mode='report', url=line.strip())
-                score_url = info_url['result']['score']
-                cats_url = info_url['result']['cats']
-                # GET WHOIS INFORMATION
-                response_whois = ibm.get_whois_info(entity=line.strip())
-                fecha_whois = response_whois['createdDate']
-                fecha_update = response_whois['updatedDate']
-                country_whois = response_whois.get('contactEmail')
-                registrante_whois = response_whois['registrarName']
-                print('URL1:', score_url, end='')
-                print('URL2:', fecha_whois, end='')
+                line = line.strip()
+                requestip(line)
+def requesturl(url):
+    info_url = ibm.get_url_info(url_mode='report', url=url)
+    response_whois = ibm.get_whois_info(entity=url)
+
+    fecha_whois = response_whois['createdDate']
+    fecha_update = response_whois['updatedDate']
+    country_whois = response_whois.get('contactEmail')
+    # registrante_whois = response_whois['registrarName']
+    score_url = info_url['result']['score']
+    cats_url = info_url['result']['cats']
+    print("{},{},{},{},{},{}".format(url,score_url, cats_url, fecha_whois, fecha_update, country_whois))
+
+def requestip(ip):
+    info_ip = ibm.get_ip_info(ip_mode='report', ip=ip)
+
+    response_whois = ibm.get_whois_info(entity=ip)
+    fecha_whois = response_whois['createdDate']
+    fecha_update = response_whois['updatedDate']
+    country_whois = response_whois.get('contactEmail')
+    # registrante_whois = response_whois['registrarName']
+    score_info = info_ip['score']
+    cats_info = info_ip['cats']
+    print("{},{},{},{},{},{}".format(ip, score_info, cats_info, fecha_whois, fecha_update, country_whois))
 
 
 class IBMXForce:
