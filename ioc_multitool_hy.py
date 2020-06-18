@@ -13,48 +13,93 @@ __author__ = "Henrry Yanez"
 __version__ = "1.2"
 
 import requests, base64
+import socket
 import json
 import re
-
+import time
+import sys
 # ================================================================
 #   TRABAJANDO CON LA API DE XFORCE --- REVISIÓN MASIVA DE IOC'S
 #   REALIZADO POR HENRRY YANEZ
 # ================================================================
 
 
+
+
 def read_lines():
-    count = 0
-    with open('target.txt') as fi:
-        for line in fi:
-            count += 1
-            v = re.match('[0-9]+(?:\.[0-9]+){3}', line.strip())
-            print(line)
-            if v:
-                # GET IP INFORMATION
-                info_ip = ibm.get_ip_info(ip_mode='report', ip=line.strip())
-                score_info = info_ip['score']
-                cats_info = info_ip['cats']
-                # GET WHOIS INFORMATION
-                response_whois = ibm.get_whois_info(entity=line.strip())
-                fecha_whois = response_whois['createdDate']
-                fecha_update = response_whois['updatedDate']
-                country_whois = response_whois.get('contactEmail')
-                registrante_whois = response_whois['registrarName']
-                print('IP1:', fecha_whois, end='')
-                print('IP2:', score_info, end='')
+    with open('target.txt','r') as fi:
+        lines = fi.readlines()
+
+        for line in lines:
+            if re.match('[0-9]+(?:\.[0-9]+){3}', line.strip()) is None:
+                line = line.strip()
+                requesturl(line)
             else:
-                #print('Linea', line, end='')
-                info_url = ibm.get_url_info(url_mode='report', url=line.strip())
-                score_url = info_url['result']['score']
-                cats_url = info_url['result']['cats']
-                # GET WHOIS INFORMATION
-                response_whois = ibm.get_whois_info(entity=line.strip())
-                fecha_whois = response_whois['createdDate']
-                fecha_update = response_whois['updatedDate']
-                country_whois = response_whois.get('contactEmail')
-                registrante_whois = response_whois['registrarName']
-                print('URL1:', score_url, end='')
-                print('URL2:', fecha_whois, end='')
+                line = line.strip()
+                requestip(line)
+
+    # fo = open('reporte.txt', 'a')
+    # lines = ["Hola Mundo!\n", "Inove Escuela de codigo\n"]
+    # fo.writelines(lines)
+    # fo.flush()  # Bajar contenido a disco (RAM --> FLASH)
+    # fo.close()  # Cerrar archivo
+
+def requesturl(url):
+    info_url = ibm.get_url_info(url_mode='report', url=url)
+    response_whois = ibm.get_whois_info(entity=url)
+
+    fecha_whois = response_whois['createdDate']
+    fecha_update = response_whois['updatedDate']
+    country_whois = response_whois.get('contactEmail')
+    # registrante_whois = response_whois['registrarName']
+    score_url = info_url['result']['score']
+    cats_url = info_url['result']['cats']
+
+    # out_url = "".join(url,score_url, cats_url, fecha_whois, fecha_update, country_whois)
+    # print("HOLA:",out_url)
+    # fo = open('reporte.txt', 'a')
+    # fo.write(out_url)
+    # fo.flush()
+    # fo.close()
+
+    print("{},{},{},{},{},{}".format(url,score_url, cats_url, fecha_whois, fecha_update, country_whois))
+    # outFile(url,score_url, cats_url)
+    # out_result(out_url)
+
+def requestip(ip):
+    info_ip = ibm.get_ip_info(ip_mode='report', ip=ip)
+
+    response_whois = ibm.get_whois_info(entity=ip)
+    fecha_whois = response_whois['createdDate']
+    fecha_update = response_whois['updatedDate']
+    country_whois = response_whois.get('contactEmail')
+    # registrante_whois = response_whois['registrarName']
+    score_info = info_ip['score']
+    cats_info = info_ip['cats']
+
+    # out_ip = "".join(ip,score_info, cats_info, fecha_whois, fecha_update, country_whois)
+    # print("HOLA:",out_ip)
+    # fo = open('reporte.txt', 'a')
+    # fo.write(out_ip)
+    # fo.flush()
+    # fo.close()
+
+    print("{},{},{},{},{},{}".format(ip, score_info, cats_info, fecha_whois, fecha_update, country_whois))
+#     outFile(ip, score_info, cats_info)
+    # out_result(out_ip)
+
+def outFile():
+    fo = open('reporte.txt', 'w')
+    fo.write("IOC,SCORE_RISK,CATEGORY,FECHA_CREACION,FECHA_ACTUALIZACION,EMAIL_REGISTER")
+    fo.flush()  # Bajar contenido a disco (RAM --> FLASH)
+    fo.close()  # Cerrar archivo
+
+# def out_result(b):
+#     fo = open('reporte.txt', 'a')
+#     fo.write(b)
+#     # fo.flush()
+#     fo.close()
+
 
 
 class IBMXForce:
@@ -129,10 +174,9 @@ class IBMXForce:
 #   INVOKE METHODS
 # ----------------------------------------------
 
-ibm = IBMXForce(api_key='XXXXXX-XXXX-XXX-XXXX-XXXXXXX', api_password='XXXXXXXX-XXXX-XXXX-XXXXX-XXXXXX') # creando el objeto para la clase IBMXForce
+ibm = IBMXForce(api_key='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', api_password='xxxxxxxxxxxxxxxxxxxxxxxxxxxxx') # creando el objeto para la clase IBMXForce
 
-
-#print("Valor Whois de",ip, ": ", score_info, ',', cats_info, ',' , fecha_whois, ',', country_whois, ',', fecha_update, ',', registrante_whois, ',', score_url, ',', cats_url)
 
 if __name__ == '__main__':
+    outFile()
     read_lines()
